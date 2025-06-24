@@ -16,13 +16,26 @@ RESET='\033[0m'
 # === Display Header ===
 function show_header() {
     clear
-    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo -e "           NEXUS - Airdrop Node"
-    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e "              🚀 Airdrop Adventure Node Manager"
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo -e "${GREEN}🔗 Telegram:${RESET} https://t.me/AirdropAdventureX"
+    echo -e "${GREEN}📦 GitHub  :${RESET} https://github.com/node-helper"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 }
 
+
 # === Check Docker Installation ===
+# === Check Docker Installation and Unmask Services ===
 function check_docker() {
+    # Unmask and enable required services
+    for svc in docker containerd docker.socket; do
+        if systemctl is-enabled "$svc" 2>/dev/null | grep -q masked; then
+            echo -e "${YELLOW}Service $svc is masked. Unmasking...${RESET}"
+            systemctl unmask "$svc"
+        fi
+    done
+
     if ! command -v docker >/dev/null 2>&1; then
         echo -e "${YELLOW}Docker not found. Installing Docker...${RESET}"
         apt update
@@ -31,9 +44,17 @@ function check_docker() {
         add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
         apt update
         apt install -y docker-ce
-        systemctl enable docker
-        systemctl start docker
     fi
+
+    # Unmask again in case apt installs a masked service
+    for svc in docker containerd docker.socket; do
+        if systemctl is-enabled "$svc" 2>/dev/null | grep -q masked; then
+            echo -e "${YELLOW}Service $svc is masked. Unmasking...${RESET}"
+            systemctl unmask "$svc"
+        fi
+        systemctl enable "$svc"
+        systemctl start "$svc"
+    done
 }
 
 # === Check Cron Installation ===
