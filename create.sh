@@ -245,6 +245,63 @@ function uninstall_all_nodes() {
     fi
     read -p "Press Enter..."
 }
+# === Update & Upgrade Packages ===
+function update_upgrade() {
+    show_header
+    echo -e "${CYAN}🔄 Updating and upgrading system packages...${RESET}"
+    apt update && apt upgrade -y
+    echo -e "${GREEN}✅ System update and upgrade complete.${RESET}"
+    read -p "Press Enter to return to menu..."
+}
+
+# === Add Swap (Customizable) ===
+function add_swap() {
+    show_header
+    total_mem=$(free -g | awk '/^Mem:/{print $2}')
+    total_mem_mb=$(free -m | awk '/^Mem:/{print $2}')
+    swap_present=$(swapon --noheadings)
+
+    echo -e "${CYAN}💾 System Memory: ${total_mem}GB${RESET}"
+    
+    if [[ -n "$swap_present" ]]; then
+        echo -e "${GREEN}✅ Swap already exists. No action needed.${RESET}"
+        read -p "Press Enter to return to menu..."
+        return
+    fi
+
+    # Recommendations
+    recommended_2x=$((total_mem * 2))
+    recommended_3x=$((total_mem * 3))
+
+    if (( total_mem < 10 )); then
+        echo -e "${YELLOW}⚠ Less than 10GB of RAM detected. Swap is recommended for stability.${RESET}"
+    else
+        echo -e "${GREEN}💡 You have ${total_mem}GB RAM. Swap may not be necessary, but it's optional for disk cache or hibernation.${RESET}"
+    fi
+
+    echo -e "${CYAN}💡 Recommended swap sizes:"
+    echo -e "   🔹 2× RAM = ${recommended_2x}GB"
+    echo -e "   🔹 3× RAM = ${recommended_3x}GB${RESET}"
+
+    read -rp "Enter desired swap size in GB (e.g., 4, 8, ${recommended_2x}, ${recommended_3x}): " swap_size
+
+    if ! [[ "$swap_size" =~ ^[0-9]+$ ]] || (( swap_size < 1 )); then
+        echo -e "${RED}❌ Invalid swap size entered. Aborting.${RESET}"
+        read -p "Press Enter to return to menu..."
+        return
+    fi
+
+    echo -e "${YELLOW}🔧 Creating ${swap_size}GB swap file...${RESET}"
+
+    fallocate -l "${swap_size}G" /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=$((swap_size * 1024))
+    chmod 600 /swapfile
+    mkswap /swapfile
+    swapon /swapfile
+    echo '/swapfile none swap sw 0 0' >> /etc/fstab
+
+    echo -e "${GREEN}✅ Swap of ${swap_size}GB successfully added and activated.${RESET}"
+    read -p "Press Enter to return to menu..."
+}
 
 # === MAIN MENU ===
 while true; do
@@ -254,7 +311,10 @@ while true; do
     echo -e "${GREEN} 3.${RESET} ❌ Remove Specific Node"
     echo -e "${GREEN} 4.${RESET} 🧾 View Node Logs"
     echo -e "${GREEN} 5.${RESET} 💥 Remove All Nodes"
-    echo -e "${GREEN} 6.${RESET} 🚪 Exit"
+    echo -e "${GREEN} 6.${RESET} 🔄 Update & Upgrade System"
+    echo -e "${GREEN} 7.${RESET} 💾 Add Swap (Recommended <10GB RAM)"
+    echo -e "${GREEN} 8.${RESET} 🚪 Exit"
+
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
     read -rp "Choose an option (1-6): " choice
     case $choice in
@@ -270,7 +330,10 @@ while true; do
         3) batch_uninstall_nodes ;;
         4) view_logs ;;
         5) uninstall_all_nodes ;;
-        6) echo "Exiting..."; exit 0 ;;
+        6) update_upgrade ;;
+        7) add_swap ;;
+        8) echo "Exiting..."; exit 0 ;;
         *) echo "Invalid choice."; read -p "Press Enter..." ;;
+
     esac
 done
