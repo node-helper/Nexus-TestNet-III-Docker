@@ -24,8 +24,9 @@ A simple Bash script to install, run, manage, and monitor Nexus Airdrop Nodes us
 1. **Run the script:**
 
 ```bash
-chmod +x nexus-node-manager.sh
-./nexus-node-manager.sh
+wget https://raw.githubusercontent.com/node-helper/Nexus-TestNet-III-Docker/refs/heads/main/create.sh
+chmod +x create.sh
+./create.sh
 ```
 
 2. **Menu options:**
