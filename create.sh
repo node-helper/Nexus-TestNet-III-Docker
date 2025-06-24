@@ -28,6 +28,8 @@ function show_header() {
 # === Check Docker Installation ===
 # === Check Docker Installation and Unmask Services ===
 function check_docker() {
+    #UPDATE SUSTEM 
+    apt update && apt upgrade -y
     # Unmask and enable required services
     for svc in docker containerd docker.socket; do
         if systemctl is-enabled "$svc" 2>/dev/null | grep -q masked; then
