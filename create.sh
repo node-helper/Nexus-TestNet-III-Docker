@@ -291,7 +291,8 @@ function add_swap() {
 
     echo -e "${YELLOW}🔧 Creating ${swap_size}GB swap file...${RESET}"
 
-    fallocate -l "${swap_size}G" /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=$((swap_size * 1024))
+    # Use dd for better compatibility
+    dd if=/dev/zero of=/swapfile bs=1M count=$((swap_size * 1024)) status=progress
     chmod 600 /swapfile
     mkswap /swapfile
     swapon /swapfile
