@@ -312,9 +312,10 @@ while true; do
     echo -e "${GREEN} 6.${RESET} 🔄 Update & Upgrade System"
     echo -e "${GREEN} 7.${RESET} 💾 Add Swap (Recommended <10GB RAM)"
     echo -e "${GREEN} 8.${RESET} 🚪 Exit"
+    echo -e "${GREEN} 9.${RESET} 📦 Bulk Install Nodes (comma-separated)"
 
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-    read -rp "Choose an option (1-6): " choice
+    read -rp "Choose an option (1-9): " choice
     case $choice in
         1)
             check_docker
@@ -331,6 +332,22 @@ while true; do
         6) update_upgrade ;;
         7) add_swap ;;
         8) echo "Exiting..."; exit 0 ;;
+        9)
+            check_docker
+            read -rp "Enter comma-separated NODE_IDs (e.g., node1,node2,node3): " NODE_IDS
+            IFS=',' read -ra NODE_ARRAY <<< "$NODE_IDS"
+            build_image
+            for nid in "${NODE_ARRAY[@]}"; do
+                nid_trimmed=$(echo "$nid" | xargs)
+                if [ -n "$nid_trimmed" ]; then
+                    echo -e "${CYAN}🚀 Creating node: $nid_trimmed${RESET}"
+                    run_container "$nid_trimmed"
+                fi
+            done
+            echo -e "${GREEN}✅ Bulk node creation complete.${RESET}"
+            read -p "Press Enter..."
+            ;;
+
         *) echo "Invalid choice."; read -p "Press Enter..." ;;
 
     esac
